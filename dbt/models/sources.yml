@@ -1,0 +1,9 @@
+version: 2
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: yellow_trips
+        description: One row per physical Parquet record in the latest loaded version of each source month.
+      - name: taxi_zones
+        description: One row per LocationID in the latest loaded TLC zone lookup.
