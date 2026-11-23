@@ -1,0 +1,44 @@
+Docker Engine 28.3.3
+Docker Compose version v2.36.2
+Airflow 3.1.7
+      dag_id      |            run_id            |  state  | duration_seconds 
+------------------+------------------------------+---------+------------------
+ nyc_taxi_monthly | manual__verification_2024_01 | failed  |           367.54
+ nyc_taxi_monthly | manual__verification_2020_04 | success |           554.72
+(2 rows)
+
+            run_id            |     task_id     |  state  | try_number | duration_seconds 
+------------------------------+-----------------+---------+------------+------------------
+ manual__verification_2024_01 | load_zones      | success |          1 |            43.63
+ manual__verification_2024_01 | load_trips      | failed  |          1 |           318.22
+ manual__verification_2024_01 | build_reporting | skipped |          0 |             0.00
+ manual__verification_2020_04 | load_zones      | success |          1 |             7.24
+ manual__verification_2020_04 | load_trips      | success |          1 |           169.32
+ manual__verification_2020_04 | build_reporting | success |          1 |           370.51
+(6 rows)
+
+ source_kind  | source_month |  status   | row_count | duration_seconds 
+--------------+--------------+-----------+-----------+------------------
+ taxi_zones   |              | succeeded |       265 |             1.79
+ yellow_trips | 2024-01-01   | running   |           |                 
+ taxi_zones   |              | succeeded |       265 |             1.32
+ yellow_trips | 2020-04-01   | succeeded |    238073 |           163.49
+(4 rows)
+
+ source_month | source_record_count | reportable_trip_count | flagged_record_count 
+--------------+---------------------+-----------------------+----------------------
+ 2020-04-01   |              238073 |                235999 |                 3877
+(1 row)
+
+DO
+
+dbt result captured from the build_reporting task
+22:29:53  Done. PASS=28 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=28
+
+Verification assertions passed
+Fresh PostgreSQL volume accepted a TCP connection and immediately returned taxi|1.
+The interrupted January COPY left zero committed rows for 2024-01.
+April raw and fact counts both matched the Parquet baseline of 238073.
+Daily zone rows: 5922. Hourly rows: 720. Both totaled 235999 pickups.
+Fare denominator: 234722. Metered fare total: USD 2767165.58.
+Distance denominator: 235995. Distance total: 712171.98 miles.
