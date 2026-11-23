@@ -1,0 +1,4 @@
+pyarrow==19.0.1
+psycopg[binary]==3.2.6
+dbt-core==1.10.15
+dbt-postgres==1.9.1

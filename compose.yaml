@@ -1,0 +1,61 @@
+x-warehouse-env: &warehouse-env
+  PGHOST: postgres
+  PGPORT: '5432'
+  PGDATABASE: ${PGDATABASE:-taxi}
+  PGUSER: ${PGUSER:-taxi}
+  PGPASSWORD: ${PGPASSWORD:?Copy .env.example to .env and set PGPASSWORD}
+
+services:
+  postgres:
+    image: postgres:17.11
+    environment:
+      POSTGRES_DB: ${PGDATABASE:-taxi}
+      POSTGRES_USER: ${PGUSER:-taxi}
+      POSTGRES_PASSWORD: ${PGPASSWORD:?Copy .env.example to .env and set PGPASSWORD}
+    ports:
+      - '127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  pipeline:
+    profiles: [cli]
+    build:
+      context: .
+      target: pipeline
+    environment: *warehouse-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  airflow:
+    profiles: [airflow]
+    build:
+      context: .
+      target: airflow
+    command: standalone
+    ports:
+      - '127.0.0.1:${AIRFLOW_HOST_PORT:-8080}:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - airflow-state:/opt/airflow/local-state
+    environment:
+      <<: *warehouse-env
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/taxi/dags
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__PARALLELISM: '4'
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_PASSWORDS_FILE: /opt/airflow/local-state/users.json
+      AIRFLOW__LOGGING__BASE_LOG_FOLDER: /opt/airflow/local-state/logs
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres/${PGDATABASE:-taxi}
+
+volumes:
+  postgres-data:
+  airflow-state:

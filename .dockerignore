@@ -1,0 +1,12 @@
+.git
+.env*
+.venv
+**/__pycache__
+**/.pytest_cache
+**/*.parquet
+data
+dbt/target
+dbt/logs
+dbt/.user.yml
+logs
+evidence
